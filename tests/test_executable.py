@@ -27,14 +27,16 @@ def test_init_db():
     import dstrk.main
     dstrk.main.main(['initDB'])
 
-def test_add_dataset():
-    raise Exception
 
-def test_add_files():
-    raise Exception
 
-def test_ls_tree():
-    raise Exception
+#def test_add_dataset():
+#    raise Exception
 
-def test_ls_files():
-    raise Exception
+#def test_add_files():
+#    raise Exception
+
+#def test_ls_tree():
+#    raise Exception
+
+#def test_ls_files():
+#    raise Exception
