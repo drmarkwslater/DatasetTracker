@@ -1,0 +1,16 @@
+#!/usr/bin/python
+
+# Make this as compatible across Python 2 & 3 as possible
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+
+# system imports
+import argparse
+
+# parse the arguments
+parser = argparse.ArgumentParser(description='Track your datasets and files, what created them, when and from what')
+parser.add_argument('command', metavar='cmd', choices=['addDS', 'addfiles', 'lsfiles', 'lstree'], help='command for Datset Tracker to run')
+                    
+args = parser.parse_args()
+print (args)
