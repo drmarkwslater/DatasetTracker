@@ -7,7 +7,8 @@ def test_no_options():
     dstrk.main.main([])
     
 def test_init_db():
-    raise Exception
+    import dstrk.main
+    dstrk.main.main(['initDB'])
 
 def test_add_dataset():
     raise Exception
