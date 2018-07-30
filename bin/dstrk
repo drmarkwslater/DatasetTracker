@@ -7,10 +7,22 @@ from __future__ import division
 
 # system imports
 import argparse
+import os
 
 # parse the arguments
 parser = argparse.ArgumentParser(description='Track your datasets and files, what created them, when and from what')
-parser.add_argument('command', metavar='cmd', choices=['addDS', 'addfiles', 'lsfiles', 'lstree'], help='command for Datset Tracker to run')
+parser.add_argument('command', metavar='cmd', choices=['initDB', 'addDS', 'addfiles', 'lsfiles', 'lstree'], help='command for Datset Tracker to run')
                     
 args = parser.parse_args()
-print (args)
+
+# do whatever we were asked to do
+if args.command == 'initDB':
+
+    # Initialise the Database. Default is in ~/.dstrk
+    ds_base_path = "~/.dstrk"
+    try:
+        import dstrk.database
+        dstrk.database.create(os.path.expanduser(ds_base_path))
+    except:
+        print ("Error initialising databse at ", ds_base_path)
+    
