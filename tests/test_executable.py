@@ -35,20 +35,20 @@ def test_help_2():
         
 def test_init_db():
     import dstrk.main
-    dstrk.main.main(['initDB', '--dbpath', '~/.dstrk-test'])
+    dstrk.main.main(['--dbpath', '~/.dstrk-test', 'initDB'])
     assert os.path.exists(os.path.expanduser('~/.dstrk-test'))
     
 def test_init_db_already_present():
     import dstrk.main
     from dstrk.exceptions import DatabaseExists
     with pytest.raises(DatabaseExists):
-        dstrk.main.main(['initDB', '--dbpath', '~/.dstrk-test'])
+        dstrk.main.main(['--dbpath', '~/.dstrk-test', 'initDB'])
     assert os.path.exists(os.path.expanduser('~/.dstrk-test'))
+            
+def test_add_dataset():
+    import dstrk.main
+    dstrk.main.main(['--dbpath', '~/.dstrk-test', 'addDS', '~/dstrk-tests/step_1/*.txt', '--tags', 'First Step'])
     
-        
-#def test_add_dataset():
-#    raise Exception
-
 #def test_add_files():
 #    raise Exception
 
