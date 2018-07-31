@@ -45,7 +45,13 @@ def test_init_db_already_present():
         dstrk.main.main(['--dbpath', '~/.dstrk-test', 'initDB'])
     assert os.path.exists(os.path.expanduser('~/.dstrk-test'))
             
-def test_add_dataset():
+def test_add_dataset_req_args():
+    import dstrk.main
+    with pytest.raises(SystemExit) as pytest_e:
+        dstrk.main.main(['--dbpath', '~/.dstrk-test', 'addDS'])
+    assert pytest_e.value.code == 2
+
+def test_add_dataset_step_1():
     import dstrk.main
     dstrk.main.main(['--dbpath', '~/.dstrk-test', 'addDS', '~/dstrk-tests/step_1/*.txt', '--tags', 'First Step'])
     
