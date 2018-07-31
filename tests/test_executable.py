@@ -1,12 +1,15 @@
 # system imports
 import pytest
+import os
 
 # setup/teardown functions
 def setup_module(module):
-    print ("setup_module      module:%s" % module.__name__)
+    if os.path.exists(os.path.expanduser("~/.dstrk-test")):
+        os.rmdir(os.path.expanduser("~/.dstrk-test"))
 
 def teardown_module(module):
-    print ("teardown_module   module:%s" % module.__name__)
+    if os.path.exists(os.path.expanduser("~/.dstrk-test")):
+        os.rmdir(os.path.expanduser("~/.dstrk-test"))
 
 # Test all the main function
 def test_main_import():
@@ -32,10 +35,17 @@ def test_help_2():
         
 def test_init_db():
     import dstrk.main
-    dstrk.main.main(['initDB'])
-
-
-
+    dstrk.main.main(['initDB', '--dbpath', '~/.dstrk-test'])
+    assert os.path.exists(os.path.expanduser('~/.dstrk-test'))
+    
+def test_init_db_already_present():
+    import dstrk.main
+    from dstrk.exceptions import DatabaseExists
+    with pytest.raises(DatabaseExists):
+        dstrk.main.main(['initDB', '--dbpath', '~/.dstrk-test'])
+    assert os.path.exists(os.path.expanduser('~/.dstrk-test'))
+    
+        
 #def test_add_dataset():
 #    raise Exception
 
