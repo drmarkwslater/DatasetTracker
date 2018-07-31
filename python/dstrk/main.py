@@ -24,6 +24,8 @@ def main(arglist):
 
         # Initialise the Database. Default is in ~/.dstrk
         ds_base_path = "~/.dstrk"
-        import dstrk.database
-        db = dstrk.database.create(os.path.expanduser(ds_base_path))
+        from dstrk.database import DSDatabase
+        ds = DSDatabase(os.path.expanduser(ds_base_path))
+        ds.init_db()
+        
     
