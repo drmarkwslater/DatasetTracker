@@ -16,7 +16,7 @@ def main(arglist):
     # parse the arguments
     parser = argparse.ArgumentParser(description='Track your datasets and files, what created them, when and from what')
     parser.add_argument('command', metavar='cmd', choices=['initDB', 'addDS', 'addfiles', 'lsfiles', 'lstree'], help='command for Datset Tracker to run')
-                    
+    parser.add_argument('--dbpath', help='Set the DB path to something other than ~/.dstrk')
     args = parser.parse_args(arglist)
 
     # do whatever we were asked to do
@@ -24,6 +24,9 @@ def main(arglist):
 
         # Initialise the Database. Default is in ~/.dstrk
         ds_base_path = "~/.dstrk"
+        if args.dbpath:
+            ds_base_path = args.dbpath
+            
         from dstrk.database import DSDatabase
         ds = DSDatabase(os.path.expanduser(ds_base_path))
         ds.init_db()
