@@ -16,7 +16,11 @@ class DSDatabase:
     def init_db(self):
         """Initialise the database at the given location
         Note: This will throw an exception if DB exists"""
-        
+
+        # is there a DB already?
         if os.path.exists(self.db_base_path):
             raise DatabaseExists
+        
+        # create the dir
+        os.mkdir(self.db_base_path)
         
