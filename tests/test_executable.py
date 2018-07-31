@@ -1,6 +1,13 @@
 # system imports
 import pytest
 
+# setup/teardown functions
+def setup_module(module):
+    print ("setup_module      module:%s" % module.__name__)
+
+def teardown_module(module):
+    print ("teardown_module   module:%s" % module.__name__)
+
 # Test all the main function
 def test_main_import():
     import dstrk.main
