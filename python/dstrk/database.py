@@ -53,7 +53,6 @@ class DSDatabase:
         ds_file_str += "Creation:  " + datetime.now().isoformat()
 
         # hash the contents and create the file
-        ds_file_hash = hashlib.sha1(ds_file_str).hexdigest()
         self.write_hash_file(ds_file_str)
 
         

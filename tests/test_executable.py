@@ -5,13 +5,27 @@ import shutil
 
 # setup/teardown functions
 def setup_module(module):
-    if os.path.exists(os.path.expanduser("~/.dstrk-test")):
-        shutil.rmtree(os.path.expanduser("~/.dstrk-test"))
+    test_db_path = os.path.expanduser("~/.dstrk-test")
+    if os.path.exists(test_db_path):
+        shutil.rmtree(test_db_path)
 
+    # create some test data
+    test_data_path = os.path.expanduser("~/.dstrk-test-data")
+    if os.path.exists(test_data_path):
+        shutil.rmtree(test_data_path)
+    os.mkdir(test_data_path)
+    for i in range(1, 4):
+        os.mkdir(os.path.join(test_data_path, "step_{0}".format(i)))
+        for j in range(1, 4):
+            open(os.path.join(test_data_path, "step_{0}".format(i), "part{0}.txt".format(j)), "w").write("Data file Step {0} Part {1}".format(i, j))
+         
 def teardown_module(module):
     if os.path.exists(os.path.expanduser("~/.dstrk-test")):
         shutil.rmtree(os.path.expanduser("~/.dstrk-test"))
-
+        
+    if os.path.exists(os.path.expanduser("~/.dstrk-test-data")):
+        shutil.rmtree(os.path.expanduser("~/.dstrk-test-data"))
+        
 # Test all the main function
 def test_main_import():
     import dstrk.main
