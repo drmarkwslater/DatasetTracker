@@ -1,15 +1,16 @@
 # system imports
 import pytest
 import os
+import shutil
 
 # setup/teardown functions
 def setup_module(module):
     if os.path.exists(os.path.expanduser("~/.dstrk-test")):
-        os.rmdir(os.path.expanduser("~/.dstrk-test"))
+        shutil.rmtree(os.path.expanduser("~/.dstrk-test"))
 
 def teardown_module(module):
     if os.path.exists(os.path.expanduser("~/.dstrk-test")):
-        os.rmdir(os.path.expanduser("~/.dstrk-test"))
+        shutil.rmtree(os.path.expanduser("~/.dstrk-test"))
 
 # Test all the main function
 def test_main_import():
@@ -50,6 +51,12 @@ def test_add_dataset_req_args():
     with pytest.raises(SystemExit) as pytest_e:
         dstrk.main.main(['--dbpath', '~/.dstrk-test', 'addDS'])
     assert pytest_e.value.code == 2
+
+def test_add_dataset_no_db():
+    import dstrk.main
+    from dstrk.exceptions import DatabaseDoesNotExist
+    with pytest.raises(DatabaseDoesNotExist) as pytest_e:
+        dstrk.main.main(['--dbpath', '~/.dstrk-test-not-present', 'addDS', '~/dstrk-tests/step_1/*.txt', '--tags', 'First Step'])
 
 def test_add_dataset_step_1():
     import dstrk.main
