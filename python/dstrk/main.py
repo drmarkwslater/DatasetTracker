@@ -24,7 +24,7 @@ def main(arglist):
     
     # add subparser for addDS
     parser_addds = subparsers.add_parser('addDS', help='Create and add a Dataset from a filelist')
-    parser_addds.add_argument('filelist', help='Globbed list of local files to add to the DS')
+    parser_addds.add_argument('filelist', nargs="+", help='Globbed list of local files to add to the DS')
     parser_addds.add_argument('--parentDS', nargs="+", help='The hash of any parent datasets this is derived from')
     parser_addds.add_argument('--tags', help='Tag information to add to the entry for this DS')
     parser_addds.set_defaults(func=addDS)

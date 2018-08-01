@@ -3,14 +3,16 @@ import pytest
 import os
 import shutil
 
+test_db_path = os.path.expanduser("~/.dstrk-test")
+test_data_path = os.path.expanduser("~/.dstrk-test-data")
+test_data_step1 = os.path.join(test_data_path, "step_1", "*.txt")
+
 # setup/teardown functions
 def setup_module(module):
-    test_db_path = os.path.expanduser("~/.dstrk-test")
     if os.path.exists(test_db_path):
         shutil.rmtree(test_db_path)
 
     # create some test data
-    test_data_path = os.path.expanduser("~/.dstrk-test-data")
     if os.path.exists(test_data_path):
         shutil.rmtree(test_data_path)
     os.mkdir(test_data_path)
@@ -20,11 +22,11 @@ def setup_module(module):
             open(os.path.join(test_data_path, "step_{0}".format(i), "part{0}.txt".format(j)), "w").write("Data file Step {0} Part {1}".format(i, j))
          
 def teardown_module(module):
-    if os.path.exists(os.path.expanduser("~/.dstrk-test")):
-        shutil.rmtree(os.path.expanduser("~/.dstrk-test"))
-        
-    if os.path.exists(os.path.expanduser("~/.dstrk-test-data")):
-        shutil.rmtree(os.path.expanduser("~/.dstrk-test-data"))
+    if os.path.exists(test_db_path):
+        shutil.rmtree(test_db_path)
+
+    #if os.path.exists(test_data_path):
+    #    shutil.rmtree(test_data_path)
         
 # Test all the main function
 def test_main_import():
@@ -50,35 +52,43 @@ def test_help_2():
         
 def test_init_db():
     import dstrk.main
-    dstrk.main.main(['--dbpath', '~/.dstrk-test', 'initDB'])
-    assert os.path.exists(os.path.expanduser('~/.dstrk-test'))
+    dstrk.main.main(['--dbpath', test_db_path, 'initDB'])
+    assert os.path.exists(os.path.expanduser(test_db_path))
     
 def test_init_db_already_present():
     import dstrk.main
     from dstrk.exceptions import DatabaseExists
     with pytest.raises(DatabaseExists):
-        dstrk.main.main(['--dbpath', '~/.dstrk-test', 'initDB'])
-    assert os.path.exists(os.path.expanduser('~/.dstrk-test'))
+        dstrk.main.main(['--dbpath', test_db_path, 'initDB'])
+    assert os.path.exists(os.path.expanduser(test_db_path))
             
 def test_add_dataset_req_args():
     import dstrk.main
     with pytest.raises(SystemExit) as pytest_e:
-        dstrk.main.main(['--dbpath', '~/.dstrk-test', 'addDS'])
+        dstrk.main.main(['--dbpath', test_db_path, 'addDS'])
     assert pytest_e.value.code == 2
 
 def test_add_dataset_no_db():
     import dstrk.main
     from dstrk.exceptions import DatabaseDoesNotExist
     with pytest.raises(DatabaseDoesNotExist) as pytest_e:
-        dstrk.main.main(['--dbpath', '~/.dstrk-test-not-present', 'addDS', '~/dstrk-tests/step_1/*.txt', '--tags', 'First Step'])
+        dstrk.main.main(['--dbpath', '~/.dstrk-test-not-present', 'addDS', test_data_step1, '--tags', 'First Step'])
+
+#def test_add_dataset_no_files():
+#    raise Exception
 
 def test_add_dataset_step_1():
     import dstrk.main
-    dstrk.main.main(['--dbpath', '~/.dstrk-test', 'addDS', '~/dstrk-tests/step_1/*.txt', '--tags', 'First Step'])
-    
-#def test_add_files():
-#    raise Exception
+    dstrk.main.main(['--dbpath', test_db_path, 'addDS', test_data_step1, '--tags', 'First Step'])
 
+    # check all files have been hashed
+    assert os.path.exists( os.path.join(test_db_path, "72", "c3", "72c3e6964b6f85d30013fb0e51b525597d393e7c") )
+    assert os.path.exists( os.path.join(test_db_path, "14", "da", "14da01205db55e211b36888f251a4e86cdf55332") )
+    assert os.path.exists( os.path.join(test_db_path, "1e", "5b", "1e5b6e59b6b44412b8ca4d306c9c66064f40be09") )
+    
+#def test_get_ds_info():
+#    raise Exception
+    
 #def test_ls_tree():
 #    raise Exception
 
