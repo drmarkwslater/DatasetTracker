@@ -23,4 +23,8 @@ class DSDatabase:
         
         # create the dir
         os.mkdir(self.db_base_path)
-        
+
+    def add_ds(self, filelist, parents=[], tags=[]):
+        """Add the given dataset and all associated files"""
+        pass
+    

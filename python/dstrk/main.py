@@ -31,20 +31,29 @@ def main(arglist):
     
     args = parser.parse_args(arglist)
     args.func(args)
+
+# --------------------------------------------------------------------
+def createDBObject(args):
+    """Create the database object"""
+    ds_base_path = "~/.dstrk"
+    if args.dbpath:
+        ds_base_path = args.dbpath
+    
+    from dstrk.database import DSDatabase
+    return DSDatabase(os.path.expanduser(ds_base_path))
+
     
 # --------------------------------------------------------------------
 def initDB(args):
     """Initialise the Database"""
-    ds_base_path = "~/.dstrk"
-    if args.dbpath:
-        ds_base_path = args.dbpath
-            
-    from dstrk.database import DSDatabase
-    ds = DSDatabase(os.path.expanduser(ds_base_path))
+    ds = createDBObject(args)
     ds.init_db()
 
 
 # --------------------------------------------------------------------
 def addDS(args):
     """Add a Dataset to the DB"""
-    print(args)
+    ds = createDBObject(args)
+    ds.add_ds(args.filelist, parents=args.parentDS, tags=args.tags)
+    
+    
