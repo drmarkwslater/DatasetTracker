@@ -95,9 +95,28 @@ def test_add_dataset_step_1():
     assert os.path.exists( os.path.join(test_db_path, "72", "c3", "72c3e6964b6f85d30013fb0e51b525597d393e7c") )
     assert os.path.exists( os.path.join(test_db_path, "14", "da", "14da01205db55e211b36888f251a4e86cdf55332") )
     assert os.path.exists( os.path.join(test_db_path, "1e", "5b", "1e5b6e59b6b44412b8ca4d306c9c66064f40be09") )
+
+def test_get_ds_info_no_arg():
+    import dstrk.main
+    with pytest.raises(SystemExit) as pytest_e:
+        dstrk.main.main(['--dbpath', test_db_path, 'DSinfo'])
+    assert pytest_e.value.code == 2
+
+def test_get_ds_info_bad_arg():
+    import dstrk.main
+    from dstrk.exceptions import NotValidFileOrHash
+    with pytest.raises(NotValidFileOrHash) as pytest_e:
+        dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', 'something_or_other'])
+
+def test_get_ds_info_bad_file():
+    import dstrk.main
+    from dstrk.exceptions import NotValidFileOrHash
+    with pytest.raises(NotValidFileOrHash) as pytest_e:
+        dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', os.path.join(test_data_path, "step_2", "part1.txt")])
     
-#def test_get_ds_info():
-#    raise Exception
+def test_get_ds_info():
+    import dstrk.main
+    dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', os.path.join(test_data_path, "step_1", "part1.txt")])
     
 #def test_ls_tree():
 #    raise Exception

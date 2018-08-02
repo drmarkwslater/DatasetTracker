@@ -8,3 +8,6 @@ class DatabaseDoesNotExist(Exception):
 
 class FileNotFound(Exception):
     pass
+
+class NotValidFileOrHash(Exception):
+    pass

@@ -7,7 +7,7 @@ import hashlib
 import glob
 
 # DT imports
-from dstrk.exceptions import DatabaseExists, DatabaseDoesNotExist, FileNotFound
+from dstrk.exceptions import DatabaseExists, DatabaseDoesNotExist, FileNotFound, NotValidFileOrHash
 
 # -----------------------------------------------------------------------------
 # class to handle all DB operations
@@ -77,3 +77,53 @@ class DSDatabase:
             file_str = "{0}\n\n{1}\n".format(ds_hash, f)
             self.write_hash_file(file_str, file_hash=file_hash[f])
 
+    def get_file_info(self, fname):
+        """get the file info of the given file"""
+        
+        # do we have a valid file?
+        if not os.path.exists(fname):
+            return {}
+
+        # what is it's hash?
+        file_hash = hashlib.sha1(open(fname, "rb").read()).hexdigest()
+
+        # open the file info
+        if not os.path.exists( os.path.join(self.db_base_path, file_hash[:2], file_hash[2:4], file_hash) ):
+            return {}
+
+        file_info_str = open( os.path.join(self.db_base_path, file_hash[:2], file_hash[2:4], file_hash) ).read()
+        file_info = {'ds':file_info_str.split()[0].strip(), 'path':file_info_str.split()[1].split(), 'hash':file_hash}
+        return file_info
+        
+    def find_ds_from_file(self, fname):
+        """return the hash of a DS given the file"""
+
+        # do we know about it?
+        file_info = self.get_file_info(fname)
+        if not file_info:
+            return ''
+        return file_info['ds']
+
+    def check_ds_hash(self, ds_hash):
+        """check that a ds hash is valid"""
+        return False
+    
+    def get_ds_info(self, file_or_hash):
+        """return the dataset given a file or hash"""
+
+        # attempt to find the DS hash
+        ds_hash = self.find_ds_from_file(file_or_hash)
+        if not ds_hash and not self.check_ds_hash(file_or_hash):
+            raise NotValidFileOrHash
+
+        # we have the DS hash so return the info
+        ds_info = {'file_paths':[], 'file_hashes':[]}
+        for ln in open( os.path.join(self.db_base_path, ds_hash[:2], ds_hash[2:4], ds_hash)).readlines():
+            if ln.find("Creation") != -1:
+                ds_info['creation'] = ' '.join(ln.split()[1:]).strip()
+            elif len(ln) > 4:
+                # file list
+                ds_info['file_paths'].append( ln.split()[0].strip() )
+                ds_info['file_hashes'].append( ln.split()[1].strip() )
+            
+        return ds_info

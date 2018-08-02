@@ -28,6 +28,11 @@ def main(arglist):
     parser_addds.add_argument('--parentDS', nargs="+", help='The hash of any parent datasets this is derived from')
     parser_addds.add_argument('--tags', help='Tag information to add to the entry for this DS')
     parser_addds.set_defaults(func=addDS)
+
+    # add subparser for DSinfo
+    parser_addds = subparsers.add_parser('DSinfo', help='Return dataset info given a file or dataset hash')
+    parser_addds.add_argument('file_or_hash', help='dataset file or hash to use to lookup the DS info')
+    parser_addds.set_defaults(func=DSinfo)
     
     args = parser.parse_args(arglist)
     args.func(args)
@@ -49,11 +54,19 @@ def initDB(args):
     ds = createDBObject(args)
     ds.init_db()
 
-
 # --------------------------------------------------------------------
 def addDS(args):
     """Add a Dataset to the DB"""
     ds = createDBObject(args)
     ds.add_ds(args.filelist, parents=args.parentDS, tags=args.tags)
+
+# --------------------------------------------------------------------
+def DSinfo(args):
+    """get dataset info given file or hash"""
+    ds = createDBObject(args)
+    ds_info = ds.get_ds_info(args.file_or_hash)
+    print("Datset Created:  {0}\n\nFilelist:".format(ds_info['creation']))
+    for f in ds_info['file_paths']:
+        print("{0}".format(f))
     
     
