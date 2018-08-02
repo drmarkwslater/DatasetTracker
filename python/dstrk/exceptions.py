@@ -5,3 +5,6 @@ class DatabaseExists(Exception):
 
 class DatabaseDoesNotExist(Exception):
     pass
+
+class FileNotFound(Exception):
+    pass

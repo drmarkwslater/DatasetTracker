@@ -74,8 +74,18 @@ def test_add_dataset_no_db():
     with pytest.raises(DatabaseDoesNotExist) as pytest_e:
         dstrk.main.main(['--dbpath', '~/.dstrk-test-not-present', 'addDS', test_data_step1, '--tags', 'First Step'])
 
-#def test_add_dataset_no_files():
-#    raise Exception
+def test_add_dataset_no_files():
+    import dstrk.main
+    from dstrk.exceptions import DatabaseDoesNotExist
+    with pytest.raises(SystemExit) as pytest_e:
+        dstrk.main.main(['--dbpath', '~/.dstrk-test-not-present', 'addDS'])
+    assert pytest_e.value.code == 2
+
+def test_add_dataset_files_not_existing():
+    import dstrk.main
+    from dstrk.exceptions import FileNotFound
+    with pytest.raises(FileNotFound) as pytest_e:
+        dstrk.main.main(['--dbpath', test_db_path, 'addDS', '/no/existing/files', '--tags', 'First Step'])
 
 def test_add_dataset_step_1():
     import dstrk.main

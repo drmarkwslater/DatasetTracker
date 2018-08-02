@@ -7,7 +7,7 @@ import hashlib
 import glob
 
 # DT imports
-from dstrk.exceptions import DatabaseExists, DatabaseDoesNotExist
+from dstrk.exceptions import DatabaseExists, DatabaseDoesNotExist, FileNotFound
 
 # -----------------------------------------------------------------------------
 # class to handle all DB operations
@@ -61,7 +61,9 @@ class DSDatabase:
         for fname in filelist:
             ds_files += glob.glob(fname)
         ds_files = sorted(ds_files)
-
+        if not ds_files:
+            raise FileNotFound
+        
         file_hash = {}
         for f in ds_files:
             file_hash[f] = hashlib.sha1(open(f, "rb").read()).hexdigest()
