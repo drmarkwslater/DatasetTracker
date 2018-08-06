@@ -25,7 +25,7 @@ def main(arglist):
     # add subparser for addDS
     parser_addds = subparsers.add_parser('addDS', help='Create and add a Dataset from a filelist')
     parser_addds.add_argument('filelist', nargs="+", help='Globbed list of local files to add to the DS')
-    parser_addds.add_argument('--parentDS', nargs="+", help='The hash of any parent datasets this is derived from')
+    parser_addds.add_argument('--parentDS', default=[], nargs="+", help='The hash of any parent datasets this is derived from')
     parser_addds.add_argument('--tags', help='Tag information to add to the entry for this DS')
     parser_addds.set_defaults(func=addDS)
 
@@ -65,7 +65,7 @@ def DSinfo(args):
     """get dataset info given file or hash"""
     ds = createDBObject(args)
     ds_info = ds.get_ds_info(args.file_or_hash)
-    print("Datset Created:  {0}\n\nFilelist:".format(ds_info['creation']))
+    print("Datset Created:  {0}\n\nParents:  {1}\n\nDataset:  {2}\n\nFilelist:".format(ds_info['creation'], ' '.join(ds_info['parents']), ds_info['ds_hash']))
     for f in ds_info['file_paths']:
         print("{0}".format(f))
     

@@ -6,6 +6,9 @@ import shutil
 test_db_path = os.path.expanduser("~/.dstrk-test")
 test_data_path = os.path.expanduser("~/.dstrk-test-data")
 test_data_step1 = os.path.join(test_data_path, "step_1", "*.txt")
+test_data_step2 = os.path.join(test_data_path, "step_2", "*.txt")
+ds_hash_step1 = ''
+ds_hash_step2 = ''
 
 # setup/teardown functions
 def setup_module(module):
@@ -116,10 +119,49 @@ def test_get_ds_info_bad_file():
     
 def test_get_ds_info():
     import dstrk.main
+    from dstrk.database import DSDatabase
+    filelist = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_1", "part1.txt"))['file_paths']
+    assert filelist == [os.path.join(test_data_path, "step_1", "part1.txt"),
+                        os.path.join(test_data_path, "step_1", "part2.txt"),
+                        os.path.join(test_data_path, "step_1", "part3.txt")]
+    hashlist = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_1", "part1.txt"))['file_hashes']
+    assert hashlist == ["1e5b6e59b6b44412b8ca4d306c9c66064f40be09",
+                        "14da01205db55e211b36888f251a4e86cdf55332",
+                        "72c3e6964b6f85d30013fb0e51b525597d393e7c"]
     dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', os.path.join(test_data_path, "step_1", "part1.txt")])
+
+def test_add_dataset_step_2():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+    global ds_hash_step1
     
+    ds_hash_step1 = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_1", "part1.txt"))['ds_hash']
+    dstrk.main.main(['--dbpath', test_db_path, 'addDS', test_data_step2, '--tags', 'Second Step', '--parentDS', ds_hash_step1])
+
+    # check all files have been hashed
+    assert os.path.exists( os.path.join(test_db_path, "4f", "80", "4f808fb01a070adffc47ebc40aa63d9c0b0d2504") )
+    assert os.path.exists( os.path.join(test_db_path, "90", "00", "90008b458c876ea73f1da15cf79b56bcf2bd383a") )
+    assert os.path.exists( os.path.join(test_db_path, "8c", "21", "8c21a6f741ff5cd525785dedff454bc33cbf58f8") )
+
+def test_get_ds_info_parent():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+    global ds_hash_step1
+    
+    filelist = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['file_paths']
+    assert filelist == [os.path.join(test_data_path, "step_2", "part1.txt"),
+                        os.path.join(test_data_path, "step_2", "part2.txt"),
+                        os.path.join(test_data_path, "step_2", "part3.txt")]
+    hashlist = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['file_hashes']
+    assert hashlist == ["4f808fb01a070adffc47ebc40aa63d9c0b0d2504",
+                        "90008b458c876ea73f1da15cf79b56bcf2bd383a",
+                        "8c21a6f741ff5cd525785dedff454bc33cbf58f8"]
+    ds_hash_step2 = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['ds_hash']
+    print(ds_hash_step1)
+
+    assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['parents'][0] == ds_hash_step1
+    dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', os.path.join(test_data_path, "step_2", "part1.txt")])
+
 #def test_ls_tree():
 #    raise Exception
 
-#def test_ls_files():
-#    raise Exception
