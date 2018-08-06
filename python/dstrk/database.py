@@ -59,6 +59,12 @@ class DSDatabase:
         # add parents
         ds_file_str += "Parents:  " + ' '.join(parents) + "\n\n"
 
+        # add parents
+        ds_file_str += "Tags:  \n"
+        for tag in tags:
+            ds_file_str += ' - ' + tag + "\n"
+        ds_file_str += "\n"
+        
         # add the list of DS files
         ds_files = []
         for fname in filelist:
@@ -120,12 +126,16 @@ class DSDatabase:
             raise NotValidFileOrHash
 
         # we have the DS hash so return the info
-        ds_info = {'file_paths':[], 'file_hashes':[], 'ds_hash': ds_hash}
+        ds_info = {'file_paths':[], 'file_hashes':[], 'ds_hash': ds_hash, 'parents': [], 'tags': []}
         for ln in open( os.path.join(self.db_base_path, ds_hash[:2], ds_hash[2:4], ds_hash)).readlines():
-            if ln.find("Creation") != -1:
+            if ln.startswith("Creation"):
                 ds_info['creation'] = ' '.join(ln.split()[1:]).strip()
-            elif ln.find("Parents") != -1:
+            elif ln.startswith("Parents"):
                 ds_info['parents'] = ln.split()[1:]
+            elif ln.startswith("Tags"):
+                continue
+            elif ln.startswith(" - "):
+                ds_info['tags'].append(ln[3:].strip())
             elif len(ln) > 4:
                 # file list
                 ds_info['file_paths'].append( ln.split()[0].strip() )

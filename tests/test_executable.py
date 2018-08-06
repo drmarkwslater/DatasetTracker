@@ -7,8 +7,10 @@ test_db_path = os.path.expanduser("~/.dstrk-test")
 test_data_path = os.path.expanduser("~/.dstrk-test-data")
 test_data_step1 = os.path.join(test_data_path, "step_1", "*.txt")
 test_data_step2 = os.path.join(test_data_path, "step_2", "*.txt")
+test_data_step3 = os.path.join(test_data_path, "step_3", "*.txt")
 ds_hash_step1 = ''
 ds_hash_step2 = ''
+ds_hash_step3 = ''
 
 # setup/teardown functions
 def setup_module(module):
@@ -146,7 +148,7 @@ def test_add_dataset_step_2():
 def test_get_ds_info_parent():
     import dstrk.main
     from dstrk.database import DSDatabase
-    global ds_hash_step1
+    global ds_hash_step1, ds_hash_step2
     
     filelist = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['file_paths']
     assert filelist == [os.path.join(test_data_path, "step_2", "part1.txt"),
@@ -157,11 +159,26 @@ def test_get_ds_info_parent():
                         "90008b458c876ea73f1da15cf79b56bcf2bd383a",
                         "8c21a6f741ff5cd525785dedff454bc33cbf58f8"]
     ds_hash_step2 = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['ds_hash']
-    print(ds_hash_step1)
 
     assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['parents'][0] == ds_hash_step1
     dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', os.path.join(test_data_path, "step_2", "part1.txt")])
 
+def test_add_dataset_step_3():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+    global ds_hash_step2, ds_hash_step3
+    
+    ds_hash_step3 = dstrk.main.main(['--dbpath', test_db_path, 'addDS', test_data_step3, '--tags', 'Third Step', '--tags',
+                                     'More third step info' ,'--parentDS', ds_hash_step2, ds_hash_step1])
+
+def test_ds_tags():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+    global ds_hash_step2, ds_hash_step3
+
+    assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))['tags'][0] == 'Third Step'
+    assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))['tags'][1] == 'More third step info'
+    
 #def test_ls_tree():
 #    raise Exception
 
