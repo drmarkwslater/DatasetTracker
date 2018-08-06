@@ -21,7 +21,7 @@ def setup_module(module):
     if os.path.exists(test_data_path):
         shutil.rmtree(test_data_path)
     os.mkdir(test_data_path)
-    for i in range(1, 4):
+    for i in range(1, 6):
         os.mkdir(os.path.join(test_data_path, "step_{0}".format(i)))
         for j in range(1, 4):
             open(os.path.join(test_data_path, "step_{0}".format(i), "part{0}.txt".format(j)), "w").write("Data file Step {0} Part {1}".format(i, j))
@@ -179,6 +179,9 @@ def test_ds_tags():
     assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))['tags'][0] == 'Third Step'
     assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))['tags'][1] == 'More third step info'
     
-#def test_ls_tree():
-#    raise Exception
+def test_ls_tree():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+    global ds_hash_step2, ds_hash_step3
 
+    dstrk.main.main(['--dbpath', test_db_path, 'tree', os.path.join(test_data_path, "step_3", "part1.txt") ])

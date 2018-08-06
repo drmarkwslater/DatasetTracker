@@ -33,6 +33,11 @@ def main(arglist):
     parser_addds = subparsers.add_parser('DSinfo', help='Return dataset info given a file or dataset hash')
     parser_addds.add_argument('file_or_hash', help='dataset file or hash to use to lookup the DS info')
     parser_addds.set_defaults(func=DSinfo)
+
+    # add subparser for DSinfo
+    parser_tree = subparsers.add_parser('tree', help='show the hierachy of the given dataset')
+    parser_tree.add_argument('file_or_hash', help='dataset file or hash to use to lookup the DS info')
+    parser_tree.set_defaults(func=tree)
     
     args = parser.parse_args(arglist)
     args.func(args)
@@ -72,4 +77,28 @@ def DSinfo(args):
     for f in ds_info['file_paths']:
         print("{0}".format(f))
     
+# --------------------------------------------------------------------
+def tree(args):
+    """get tree info given file or hash"""
+    ds = createDBObject(args)
+    ds_tree = ds.get_ds_tree(args.file_or_hash)
+    
+    def print_leaf(ds_dict):
+        max_depth = 0
+        for ds in ds_dict['parents']:
+            max_depth_temp = print_leaf(ds)
+            print("     " * (max_depth+1) + "|")
+            if max_depth_temp > max_depth:
+                max_depth = max_depth_temp
+
+        
+        if len(ds_dict['parents']):
+            max_depth += 1
+            str_to_print = "     " * max_depth + "+--> " + ds_dict['ds_hash'] + "  {0}".format(ds_dict['tags'])
+        else:
+            str_to_print = ds_dict['ds_hash'] + "  {0}".format(ds_dict['tags'])
+        print(str_to_print)
+        return max_depth
+
+    print_leaf(ds_tree)
     

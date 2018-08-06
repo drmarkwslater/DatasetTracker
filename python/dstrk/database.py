@@ -33,6 +33,7 @@ class DSDatabase:
             os.mkdir(os.path.join(self.db_base_path, file_hash[:2], file_hash[2:4]))
 
         open(os.path.join(self.db_base_path, file_hash[:2], file_hash[2:4], file_hash), "w").write(file_str)
+
         return file_hash
     
     def init_db(self):
@@ -115,15 +116,17 @@ class DSDatabase:
 
     def check_ds_hash(self, ds_hash):
         """check that a ds hash is valid"""
-        return False
+        return os.path.exists(os.path.join(self.db_base_path, ds_hash[:2], ds_hash[2:4], ds_hash))
     
     def get_ds_info(self, file_or_hash):
         """return the dataset given a file or hash"""
 
         # attempt to find the DS hash
         ds_hash = self.find_ds_from_file(file_or_hash)
-        if not ds_hash and not self.check_ds_hash(file_or_hash):
-            raise NotValidFileOrHash
+        if not ds_hash:
+            if file_or_hash[0] == '/' or not self.check_ds_hash(file_or_hash):
+                raise NotValidFileOrHash
+            ds_hash = file_or_hash
 
         # we have the DS hash so return the info
         ds_info = {'file_paths':[], 'file_hashes':[], 'ds_hash': ds_hash, 'parents': [], 'tags': []}
@@ -142,3 +145,23 @@ class DSDatabase:
                 ds_info['file_hashes'].append( ln.split()[1].strip() )
             
         return ds_info
+
+    def get_ds_tree(self, file_or_hash):
+        """Return a dictionary that contains the tree info for the given dataset"""
+
+        # attempt to find the DS hash
+        ds_hash = self.find_ds_from_file(file_or_hash)
+        if not ds_hash and not self.check_ds_hash(file_or_hash):
+            raise NotValidFileOrHash
+
+        # grab the info
+        def get_parent_info(ds_hash):
+            ds_info = self.get_ds_info(ds_hash)
+            tree_info = {'ds_hash':ds_hash, 'parents':[], 'tags':ds_info['tags']}
+            for ds in ds_info['parents']:
+                tree_info['parents'].append( get_parent_info(ds) )
+            return tree_info
+        
+        return get_parent_info(ds_hash)
+
+        
