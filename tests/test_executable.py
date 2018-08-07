@@ -272,4 +272,18 @@ def test_dataset_removal():
     assert ds_hash_step3 == DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))['ds_hash']
     assert ds_hash_step2 == DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['ds_hash']
     
-                    
+def test_file_removal():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+    from dstrk.exceptions import NotValidFileOrHash
+    global ds_hash_step2, ds_hash_step3
+
+    assert ds_hash_step3 == DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))['ds_hash']
+
+    dstrk.main.main(['--dbpath', test_db_path, 'delfiles', test_data_step3])
+
+    with pytest.raises(NotValidFileOrHash) as pytest_e:
+        ds_info = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))
+
+    with pytest.raises(NotValidFileOrHash) as pytest_e:
+        ds_info = DSDatabase(test_db_path).get_ds_info(ds_hash_step3)

@@ -48,32 +48,52 @@ class DSDatabase:
         # create the dir
         os.mkdir(self.db_base_path)
 
-    def add_ds(self, filelist, parents=[], tags=[], file_hash={}, ds_hash='', gitinfo=[]):
-        """Add the given dataset and all associated files"""
-
-        self.check_db()
+    def write_ds_info(self, ds_info):
+        """Modify the given dataset info file"""
         
         ds_file_str = ""
 
         # add creation time
-        ds_file_str += "Creation:  " + datetime.now().isoformat() + "\n\n"
+        ds_file_str += "Creation:  " + ds_info['creation'] + "\n\n"
 
         # add parents
-        ds_file_str += "Parents:  " + ' '.join(parents) + "\n\n"
+        ds_file_str += "Parents:  " + ' '.join(ds_info['parents']) + "\n\n"
 
         # add tags
         ds_file_str += "Tags:  \n"
-        for tag in tags:
+        for tag in ds_info['tags']:
             ds_file_str += ' - ' + tag + "\n"
-        for repo_path in gitinfo:
-            if not os.path.exists(repo_path):
-                raise GitRepoDoesNotExist
-            ds_file_str += ' - GIT HEAD: ' + subprocess.check_output("git -C {0} rev-parse HEAD".format(repo_path), shell=True).strip() + '\n'
-            ds_file_str += ' - GIT Branch: ' + subprocess.check_output("git -C {0} rev-parse --abbrev-ref HEAD".format(repo_path), shell=True).strip() + '\n'
-            ds_file_str += ' - GIT Remote: ' + subprocess.check_output("git -C {0} remote -v".format(repo_path), shell=True).replace('\n', ' ').strip() + '\n'
             
         ds_file_str += "\n"
 
+        # add the list of DS files
+        for i in range(0, len(ds_info['file_paths'])):
+            ds_file_str += ds_info['file_paths'][i] + "  " + ds_info['file_hashes'][i] + "\n"
+            
+        # hash the contents and create the file
+        ds_hash = self.write_hash_file(ds_file_str, ds_info['ds_hash'])
+        return ds_hash
+    
+    def add_ds(self, filelist, parents=[], tags=[], file_hash={}, ds_hash='', gitinfo=[]):
+        """Add the given dataset and all associated files"""
+
+        self.check_db()
+
+        ds_info = {}
+        ds_info['creation'] = datetime.now().isoformat()
+        ds_info['parents'] = parents
+
+        # add tags
+        ds_info['tags'] = tags
+        
+        for repo_path in gitinfo:
+            if not os.path.exists(repo_path):
+                raise GitRepoDoesNotExist
+            tags.append( 'GIT HEAD: ' + subprocess.check_output("git -C {0} rev-parse HEAD".format(repo_path), shell=True).strip())
+            tags.append( 'GIT Branch: ' + subprocess.check_output("git -C {0} rev-parse --abbrev-ref HEAD".format(repo_path), shell=True).strip())
+            tags.append( 'GIT Remote: ' + subprocess.check_output("git -C {0} remote -v".format(repo_path), shell=True).replace('\n', ' ').strip())
+            tags.append( 'GIT Path: ' + repo_path)
+            
         # add the list of DS files
         ds_files = []
         for fname in filelist:
@@ -81,15 +101,19 @@ class DSDatabase:
         ds_files = sorted(ds_files)
         if not ds_files:
             raise FileNotFound
-        
+
+        ds_info['file_paths'] =[]
+        ds_info['file_hashes'] =[]
         for f in ds_files:
             if not f in file_hash:
                 file_hash[f] = hashlib.sha1(open(f, "rb").read()).hexdigest()
-                
-            ds_file_str += f + "  " + file_hash[f] + "\n"
+
+            ds_info['file_paths'].append(f)
+            ds_info['file_hashes'].append(file_hash[f])
             
         # hash the contents and create the file
-        ds_hash = self.write_hash_file(ds_file_str, ds_hash)
+        ds_info['ds_hash'] = ds_hash
+        ds_hash = self.write_ds_info(ds_info)
         
         # create a hash for each of the given files
         for f in ds_files:
@@ -258,3 +282,43 @@ class DSDatabase:
         # finally, remove the DS entry
         os.remove(os.path.join(self.db_base_path, ds_info['ds_hash'][:2], ds_info['ds_hash'][2:4], ds_info['ds_hash']))
     
+    def del_files(self, filelist):
+        """Remove these files from the DB"""
+
+        # glob the files and check if they all exist
+        all_files = []
+        for fname in filelist:
+            all_files +=  glob.glob(fname)
+
+        if not all_files:
+            raise FileNotFound
+
+        # now remove each one
+        ds_list = []
+        all_file_info = []
+        for fname in all_files:
+            file_info = self.get_file_info(fname)
+            all_file_info.append((file_info['path'], file_info['hash']))
+            
+            # keep track of the datasets to check afterwards
+            ds_list += file_info['ds']
+
+            # remove the file info
+            os.remove(os.path.join(self.db_base_path, file_info['hash'][:2], file_info['hash'][2:4], file_info['hash']))
+            
+        # remove duplicate DS checks
+        ds_list = list(set(ds_list))
+
+        for ds in ds_list:
+            ds_info = self.get_ds_info(ds)
+
+            for finfo in all_file_info:
+                ds_info['file_paths'].remove(finfo[0])
+                ds_info['file_hashes'].remove(finfo[1])
+
+            if len(ds_info['file_paths']) == 0:
+                # the DS has no more files, remove it
+                os.remove(os.path.join(self.db_base_path, ds_info['ds_hash'][:2], ds_info['ds_hash'][2:4], ds_info['ds_hash']))
+            else:
+                # otherwise, rewrite the ds_info file
+                self.write_ds_info(ds_info)

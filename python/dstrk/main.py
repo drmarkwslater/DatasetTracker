@@ -51,6 +51,11 @@ def main(arglist):
     parser_delds = subparsers.add_parser('delDS', help='Remove the given Dataset')
     parser_delds.add_argument('file_or_hash', help='dataset file or hash to use to lookup the DS info')
     parser_delds.set_defaults(func=delDS)
+
+    # add subparser for delfiles
+    parser_delds = subparsers.add_parser('delfiles', help='Remove the given files')
+    parser_delds.add_argument('filelist', nargs="+", help='Globbed list of local files to remove from DB')
+    parser_delds.set_defaults(func=delfiles)
     
     args = parser.parse_args(arglist)
     args.func(args)
@@ -129,4 +134,10 @@ def delDS(args):
     """Delete the dataset from the DB"""
     ds = createDBObject(args)
     ds.del_ds(args.file_or_hash)
+    
+# --------------------------------------------------------------------
+def delfiles(args):
+    """Delete the files from the DB"""
+    ds = createDBObject(args)
+    ds.del_files(args.filelist)
     
