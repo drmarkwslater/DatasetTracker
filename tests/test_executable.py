@@ -253,3 +253,23 @@ def test_git_integration():
     assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_1", "part1.txt"))['tags'][1].startswith("GIT Branch")
     assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_1", "part1.txt"))['tags'][2].startswith("GIT Remote")
     
+def test_dataset_removal():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+    from dstrk.exceptions import NotValidFileOrHash
+    global ds_hash_step2, ds_hash_step3, ds_hash_step4
+
+    # these should point to DS 4 by default at this point
+    assert ds_hash_step4 == DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))['ds_hash']
+    assert ds_hash_step4 == DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['ds_hash']
+    
+    dstrk.main.main(['--dbpath', test_db_path, 'delDS', ds_hash_step4])
+
+    # now check it's gone
+    with pytest.raises(NotValidFileOrHash) as pytest_e:
+        dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', ds_hash_step4])
+
+    assert ds_hash_step3 == DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))['ds_hash']
+    assert ds_hash_step2 == DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['ds_hash']
+    
+                    

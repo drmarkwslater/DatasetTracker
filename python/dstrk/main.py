@@ -32,9 +32,9 @@ def main(arglist):
     parser_addds.set_defaults(func=addDS)
 
     # add subparser for DSinfo
-    parser_addds = subparsers.add_parser('DSinfo', help='Return dataset info given a file or dataset hash')
-    parser_addds.add_argument('file_or_hash', help='dataset file or hash to use to lookup the DS info')
-    parser_addds.set_defaults(func=DSinfo)
+    parser_dsinfo = subparsers.add_parser('DSinfo', help='Return dataset info given a file or dataset hash')
+    parser_dsinfo.add_argument('file_or_hash', help='dataset file or hash to use to lookup the DS info')
+    parser_dsinfo.set_defaults(func=DSinfo)
 
     # add subparser for DSinfo
     parser_tree = subparsers.add_parser('tree', help='show the hierachy of the given dataset')
@@ -46,6 +46,11 @@ def main(arglist):
     parser_addfiles.add_argument('filelist', nargs="+", help='Globbed list of local files to add to the DS')
     parser_addfiles.add_argument('--dataset', help='dataset file or hash to add files to', required=True)
     parser_addfiles.set_defaults(func=addfiles)
+
+    # add subparser for delDS
+    parser_delds = subparsers.add_parser('delDS', help='Remove the given Dataset')
+    parser_delds.add_argument('file_or_hash', help='dataset file or hash to use to lookup the DS info')
+    parser_delds.set_defaults(func=delDS)
     
     args = parser.parse_args(arglist)
     args.func(args)
@@ -118,3 +123,10 @@ def addfiles(args):
     """Add files to an existing dataset"""
     ds = createDBObject(args)
     ds.add_files(args.filelist, dataset=args.dataset)
+
+# --------------------------------------------------------------------
+def delDS(args):
+    """Delete the dataset from the DB"""
+    ds = createDBObject(args)
+    ds.del_ds(args.file_or_hash)
+    

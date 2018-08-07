@@ -73,7 +73,7 @@ class DSDatabase:
             ds_file_str += ' - GIT Remote: ' + subprocess.check_output("git -C {0} remote -v".format(repo_path), shell=True).replace('\n', ' ').strip() + '\n'
             
         ds_file_str += "\n"
-        print (ds_file_str)
+
         # add the list of DS files
         ds_files = []
         for fname in filelist:
@@ -112,7 +112,7 @@ class DSDatabase:
         """get the file info of the given file"""
         
         # do we have a valid file?
-        if not os.path.exists(fname):
+        if not os.path.exists(fname) and not file_hash:
             return {}
 
         # what is it's hash?
@@ -237,3 +237,24 @@ class DSDatabase:
 
         self.add_ds(ds_info['file_paths'], parents=ds_info['parents'], tags=ds_info['tags'], file_hash=file_hash, ds_hash=ds_info['ds_hash'])
         
+    def del_ds(self, file_or_hash):
+        """Delete the given dataset from the DB"""
+
+        # first, does the dataset exist?
+        ds_info = self.get_ds_info(file_or_hash)
+
+        # clear out DS info from the files
+        for fhash in ds_info['file_hashes']:
+            file_info = self.get_file_info('', file_hash=fhash)
+            file_info['ds'].remove(ds_info["ds_hash"])
+            if len(file_info['ds']) == 0:
+                # no other datasets so remove it
+                os.remove(os.path.join(self.db_base_path, file_hash[:2], file_hash[2:4], file_hash))
+            else:
+                # re-write the info file with this change
+                file_str = "{0}\n{1}\n".format(" ".join(file_info['ds']), file_info['path'])
+                self.write_hash_file(file_str, file_hash=fhash)
+
+        # finally, remove the DS entry
+        os.remove(os.path.join(self.db_base_path, ds_info['ds_hash'][:2], ds_info['ds_hash'][2:4], ds_info['ds_hash']))
+    
