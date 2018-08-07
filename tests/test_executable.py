@@ -243,3 +243,13 @@ def test_add_files_to_dataset():
 
     assert ds_hash_step4 == DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['ds_hash']
     
+def test_git_integration():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+
+    dstrk.main.main(['--dbpath', test_db_path, 'addDS', test_data_step1, '--gitinfo', test_git_path])
+    
+    assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_1", "part1.txt"))['tags'][0].startswith("GIT HEAD")
+    assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_1", "part1.txt"))['tags'][1].startswith("GIT Branch")
+    assert DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_1", "part1.txt"))['tags'][2].startswith("GIT Remote")
+    

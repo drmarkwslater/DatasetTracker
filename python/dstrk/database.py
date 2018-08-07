@@ -5,9 +5,10 @@ import os
 from datetime import datetime
 import hashlib
 import glob
+import subprocess
 
 # DT imports
-from dstrk.exceptions import DatabaseExists, DatabaseDoesNotExist, FileNotFound, NotValidFileOrHash
+from dstrk.exceptions import DatabaseExists, DatabaseDoesNotExist, FileNotFound, NotValidFileOrHash, GitRepoDoesNotExist
 
 # -----------------------------------------------------------------------------
 # class to handle all DB operations
@@ -47,7 +48,7 @@ class DSDatabase:
         # create the dir
         os.mkdir(self.db_base_path)
 
-    def add_ds(self, filelist, parents=[], tags=[], file_hash={}, ds_hash=''):
+    def add_ds(self, filelist, parents=[], tags=[], file_hash={}, ds_hash='', gitinfo=[]):
         """Add the given dataset and all associated files"""
 
         self.check_db()
@@ -64,8 +65,15 @@ class DSDatabase:
         ds_file_str += "Tags:  \n"
         for tag in tags:
             ds_file_str += ' - ' + tag + "\n"
+        for repo_path in gitinfo:
+            if not os.path.exists(repo_path):
+                raise GitRepoDoesNotExist
+            ds_file_str += ' - GIT HEAD: ' + subprocess.check_output("git -C {0} rev-parse HEAD".format(repo_path), shell=True).strip() + '\n'
+            ds_file_str += ' - GIT Branch: ' + subprocess.check_output("git -C {0} rev-parse --abbrev-ref HEAD".format(repo_path), shell=True).strip() + '\n'
+            ds_file_str += ' - GIT Remote: ' + subprocess.check_output("git -C {0} remote -v".format(repo_path), shell=True).replace('\n', ' ').strip() + '\n'
+            
         ds_file_str += "\n"
-        
+        print (ds_file_str)
         # add the list of DS files
         ds_files = []
         for fname in filelist:

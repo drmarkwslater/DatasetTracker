@@ -27,6 +27,8 @@ def main(arglist):
     parser_addds.add_argument('filelist', nargs="+", help='Globbed list of local files to add to the DS')
     parser_addds.add_argument('--parentDS', default=[], nargs="+", help='The hash of any parent datasets this is derived from')
     parser_addds.add_argument('--tags', default=[], action='append', help='Tag information to add to the entry for this DS')
+    parser_addds.add_argument('--gitinfo', default=[], action='append',
+                              help='Fill tags from the given git repo(s). Will run: git rev-parse HEAD, git rev-parse --abbrev-ref HEAD, git remote -v')
     parser_addds.set_defaults(func=addDS)
 
     # add subparser for DSinfo
@@ -69,7 +71,10 @@ def initDB(args):
 def addDS(args):
     """Add a Dataset to the DB"""
     ds = createDBObject(args)
-    ds.add_ds(args.filelist, parents=args.parentDS, tags=args.tags)
+    gitrepos = []
+    for repo in args.gitinfo:
+        gitrepos.append(os.path.abspath(os.path.expanduser(repo)))
+    ds.add_ds(args.filelist, parents=args.parentDS, tags=args.tags, gitinfo=gitrepos)
 
 # --------------------------------------------------------------------
 def DSinfo(args):

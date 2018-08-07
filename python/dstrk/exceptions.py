@@ -11,3 +11,6 @@ class FileNotFound(Exception):
 
 class NotValidFileOrHash(Exception):
     pass
+
+class GitRepoDoesNotExist(Exception):
+    pass
