@@ -2,6 +2,7 @@
 import pytest
 import os
 import shutil
+import sys
 
 test_db_path = os.path.expanduser("~/.dstrk-test")
 test_data_path = os.path.expanduser("~/.dstrk-test-data")
@@ -11,6 +12,8 @@ test_data_step3 = os.path.join(test_data_path, "step_3", "*.txt")
 ds_hash_step1 = ''
 ds_hash_step2 = ''
 ds_hash_step3 = ''
+ds_hash_step4 = ''
+test_git_path = os.path.expanduser("~/.dstrk-test-git")
 
 # setup/teardown functions
 def setup_module(module):
@@ -25,13 +28,24 @@ def setup_module(module):
         os.mkdir(os.path.join(test_data_path, "step_{0}".format(i)))
         for j in range(1, 4):
             open(os.path.join(test_data_path, "step_{0}".format(i), "part{0}.txt".format(j)), "w").write("Data file Step {0} Part {1}".format(i, j))
-         
+
+    # create a test repo
+    if os.path.exists(test_git_path):
+        shutil.rmtree(test_git_path)
+    os.mkdir(test_git_path)
+    ret = os.system("cd {0} && git init && echo 'HELLO' > test.txt && git add test.txt && git commit -m 'basic commit'".format(test_git_path))
+    if ret:
+        sys.exit(ret)
+        
 def teardown_module(module):
     if os.path.exists(test_db_path):
         shutil.rmtree(test_db_path)
 
     #if os.path.exists(test_data_path):
     #    shutil.rmtree(test_data_path)
+
+    if os.path.exists(test_git_path):
+        shutil.rmtree(test_git_path)
         
 # Test all the main function
 def test_main_import():
@@ -210,5 +224,22 @@ def test_short_hash():
     assert tree['ds_hash'] == ds_hash_step3
     assert tree['tags'] == ['Third Step', 'More third step info']
     
+def test_file_in_multiple_datasets():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+    global ds_hash_step3, ds_hash_step4
     
+    dstrk.main.main(['--dbpath', test_db_path, 'addDS', test_data_step3, '--tags', 'Redone third Step', '--parentDS', ds_hash_step2, ds_hash_step1])
+    ds_hash_step4 = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))['ds_hash']
+    assert ds_hash_step4 != ds_hash_step3
+    assert DSDatabase(test_db_path).get_ds_info(ds_hash_step4[0:7])['tags'][0] == 'Redone third Step'
+    
+def test_add_files_to_dataset():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+    global ds_hash_step2, ds_hash_step4
+    
+    dstrk.main.main(['--dbpath', test_db_path, 'addfiles', test_data_step2, '--dataset', os.path.join(test_data_path, "step_3", "part1.txt")])
+
+    assert ds_hash_step4 == DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_2", "part1.txt"))['ds_hash']
     
