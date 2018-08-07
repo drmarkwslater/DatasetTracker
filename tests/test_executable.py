@@ -168,9 +168,10 @@ def test_add_dataset_step_3():
     from dstrk.database import DSDatabase
     global ds_hash_step2, ds_hash_step3
     
-    ds_hash_step3 = dstrk.main.main(['--dbpath', test_db_path, 'addDS', test_data_step3, '--tags', 'Third Step', '--tags',
-                                     'More third step info' ,'--parentDS', ds_hash_step2, ds_hash_step1])
-
+    dstrk.main.main(['--dbpath', test_db_path, 'addDS', test_data_step3, '--tags', 'Third Step', '--tags',
+                     'More third step info' ,'--parentDS', ds_hash_step2, ds_hash_step1])
+    ds_hash_step3 = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_3", "part1.txt"))['ds_hash']
+    
 def test_ds_tags():
     import dstrk.main
     from dstrk.database import DSDatabase
@@ -182,6 +183,13 @@ def test_ds_tags():
 def test_ls_tree():
     import dstrk.main
     from dstrk.database import DSDatabase
-    global ds_hash_step2, ds_hash_step3
+    global ds_hash_step1, ds_hash_step2, ds_hash_step3
 
     dstrk.main.main(['--dbpath', test_db_path, 'tree', os.path.join(test_data_path, "step_3", "part1.txt") ])
+
+    tree = DSDatabase(test_db_path).get_ds_tree(os.path.join(test_data_path, "step_3", "part1.txt"))
+    assert tree['ds_hash'] == ds_hash_step3
+    assert tree['tags'] == ['Third Step', 'More third step info']
+    assert tree['parents'][0]['ds_hash'] == ds_hash_step2
+    assert tree['parents'][0]['parents'][0]['ds_hash'] == ds_hash_step1
+
