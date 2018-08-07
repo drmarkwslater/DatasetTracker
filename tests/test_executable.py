@@ -136,7 +136,7 @@ def test_add_dataset_step_2():
     import dstrk.main
     from dstrk.database import DSDatabase
     global ds_hash_step1
-    
+
     ds_hash_step1 = DSDatabase(test_db_path).get_ds_info(os.path.join(test_data_path, "step_1", "part1.txt"))['ds_hash']
     dstrk.main.main(['--dbpath', test_db_path, 'addDS', test_data_step2, '--tags', 'Second Step', '--parentDS', ds_hash_step1])
 
@@ -203,3 +203,12 @@ def test_short_hash():
     dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', ds_hash_step1[0:7] ])
     with pytest.raises(NotValidFileOrHash) as pytest_e:
         dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', ds_hash_step1[0:3] ])
+
+    assert ds_hash_step1 == DSDatabase(test_db_path).get_ds_info(ds_hash_step1[0:7])['ds_hash']
+    assert DSDatabase(test_db_path).get_ds_info(ds_hash_step3[0:7])['tags'][0] == 'Third Step'
+    tree = DSDatabase(test_db_path).get_ds_tree(ds_hash_step3[0:7])
+    assert tree['ds_hash'] == ds_hash_step3
+    assert tree['tags'] == ['Third Step', 'More third step info']
+    
+    
+    

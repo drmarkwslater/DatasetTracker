@@ -134,7 +134,7 @@ class DSDatabase:
         elif len(hash_list) != 1:
             return hash
         
-        return hash_list[0]
+        return os.path.basename(hash_list[0])
     
     def get_ds_hash_from_file_or_hash(self, file_or_hash):
         """Given a filename or ds hash, return the ds hash if found
