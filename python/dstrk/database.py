@@ -60,7 +60,7 @@ class DSDatabase:
         # add parents
         ds_file_str += "Parents:  " + ' '.join(parents) + "\n\n"
 
-        # add parents
+        # add tags
         ds_file_str += "Tags:  \n"
         for tag in tags:
             ds_file_str += ' - ' + tag + "\n"
@@ -117,17 +117,47 @@ class DSDatabase:
     def check_ds_hash(self, ds_hash):
         """check that a ds hash is valid"""
         return os.path.exists(os.path.join(self.db_base_path, ds_hash[:2], ds_hash[2:4], ds_hash))
-    
-    def get_ds_info(self, file_or_hash):
-        """return the dataset given a file or hash"""
 
+    def expand_hash(self, ds_hash):
+        """Expand the given hash if we can, otherwise return nothing"""
+        if len(ds_hash) < 7:
+            return ''
+
+        # do we have the directory?
+        if not os.path.exists(os.path.join(self.db_base_path, ds_hash[:2], ds_hash[2:4])):
+            return ''
+
+        # can we match any files?
+        hash_list = glob.glob(os.path.join(self.db_base_path, ds_hash[:2], ds_hash[2:4], ds_hash+'*'))
+        if len(hash_list) == 0:
+            return ''
+        elif len(hash_list) != 1:
+            return hash
+        
+        return hash_list[0]
+    
+    def get_ds_hash_from_file_or_hash(self, file_or_hash):
+        """Given a filename or ds hash, return the ds hash if found
+        This will expand hashes as well"""
+        
         # attempt to find the DS hash
         ds_hash = self.find_ds_from_file(file_or_hash)
         if not ds_hash:
-            if file_or_hash[0] == '/' or not self.check_ds_hash(file_or_hash):
-                raise NotValidFileOrHash
-            ds_hash = file_or_hash
+            temp_hash = self.expand_hash(file_or_hash)
+            if file_or_hash[0] == '/' or not self.check_ds_hash(temp_hash):
+                ds_hash = ''
+            else:
+                ds_hash = temp_hash
 
+        return ds_hash
+            
+    def get_ds_info(self, file_or_hash):
+        """return the dataset given a file or hash"""
+
+        ds_hash = self.get_ds_hash_from_file_or_hash(file_or_hash)
+        if not ds_hash:
+            raise NotValidFileOrHash
+        
         # we have the DS hash so return the info
         ds_info = {'file_paths':[], 'file_hashes':[], 'ds_hash': ds_hash, 'parents': [], 'tags': []}
         for ln in open( os.path.join(self.db_base_path, ds_hash[:2], ds_hash[2:4], ds_hash)).readlines():
@@ -149,9 +179,8 @@ class DSDatabase:
     def get_ds_tree(self, file_or_hash):
         """Return a dictionary that contains the tree info for the given dataset"""
 
-        # attempt to find the DS hash
-        ds_hash = self.find_ds_from_file(file_or_hash)
-        if not ds_hash and not self.check_ds_hash(file_or_hash):
+        ds_hash = self.get_ds_hash_from_file_or_hash(file_or_hash)
+        if not ds_hash:
             raise NotValidFileOrHash
 
         # grab the info
@@ -163,5 +192,3 @@ class DSDatabase:
             return tree_info
         
         return get_parent_info(ds_hash)
-
-        

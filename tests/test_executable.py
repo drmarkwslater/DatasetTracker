@@ -193,3 +193,13 @@ def test_ls_tree():
     assert tree['parents'][0]['ds_hash'] == ds_hash_step2
     assert tree['parents'][0]['parents'][0]['ds_hash'] == ds_hash_step1
 
+def test_short_hash():
+    import dstrk.main
+    from dstrk.database import DSDatabase
+    from dstrk.exceptions import NotValidFileOrHash
+    global ds_hash_step1, ds_hash_step2, ds_hash_step3
+
+    dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', ds_hash_step1 ])
+    dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', ds_hash_step1[0:7] ])
+    with pytest.raises(NotValidFileOrHash) as pytest_e:
+        dstrk.main.main(['--dbpath', test_db_path, 'DSinfo', ds_hash_step1[0:3] ])
