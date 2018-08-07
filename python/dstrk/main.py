@@ -38,6 +38,12 @@ def main(arglist):
     parser_tree = subparsers.add_parser('tree', help='show the hierachy of the given dataset')
     parser_tree.add_argument('file_or_hash', help='dataset file or hash to use to lookup the DS info')
     parser_tree.set_defaults(func=tree)
+
+    # add subparser for addfiles
+    parser_addfiles = subparsers.add_parser('addfiles', help='Add the given files to an existing dataset')
+    parser_addfiles.add_argument('filelist', nargs="+", help='Globbed list of local files to add to the DS')
+    parser_addfiles.add_argument('--dataset', help='dataset file or hash to add files to', required=True)
+    parser_addfiles.set_defaults(func=addfiles)
     
     args = parser.parse_args(arglist)
     args.func(args)
@@ -102,3 +108,8 @@ def tree(args):
 
     print_leaf(ds_tree)
     
+# --------------------------------------------------------------------
+def addfiles(args):
+    """Add files to an existing dataset"""
+    ds = createDBObject(args)
+    ds.add_files(args.filelist, dataset=args.dataset)

@@ -47,7 +47,7 @@ class DSDatabase:
         # create the dir
         os.mkdir(self.db_base_path)
 
-    def add_ds(self, filelist, parents=[], tags=[]):
+    def add_ds(self, filelist, parents=[], tags=[], file_hash={}, ds_hash=''):
         """Add the given dataset and all associated files"""
 
         self.check_db()
@@ -74,20 +74,33 @@ class DSDatabase:
         if not ds_files:
             raise FileNotFound
         
-        file_hash = {}
         for f in ds_files:
-            file_hash[f] = hashlib.sha1(open(f, "rb").read()).hexdigest()
+            if not f in file_hash:
+                file_hash[f] = hashlib.sha1(open(f, "rb").read()).hexdigest()
+                
             ds_file_str += f + "  " + file_hash[f] + "\n"
             
         # hash the contents and create the file
-        ds_hash = self.write_hash_file(ds_file_str)
-
+        ds_hash = self.write_hash_file(ds_file_str, ds_hash)
+        
         # create a hash for each of the given files
         for f in ds_files:
-            file_str = "{0}\n\n{1}\n".format(ds_hash, f)
+            # check if we have a duplicate file
+            file_info = self.get_file_info(f, file_hash[f])
+            if file_info:
+                # attempting to add file to same ds
+                if ds_hash in file_info['ds']:
+                    continue
+                
+                print("WARNING: File {0} already present in dataset(s) {1}".format(f, file_info['ds']))
+                file_info['ds'].insert(0, ds_hash)
+                file_str = "{0}\n{1}\n".format(" ".join(file_info['ds']), f)
+            else:
+                file_str = "{0}\n{1}\n".format(ds_hash, f)
+                
             self.write_hash_file(file_str, file_hash=file_hash[f])
 
-    def get_file_info(self, fname):
+    def get_file_info(self, fname, file_hash=""):
         """get the file info of the given file"""
         
         # do we have a valid file?
@@ -95,14 +108,18 @@ class DSDatabase:
             return {}
 
         # what is it's hash?
-        file_hash = hashlib.sha1(open(fname, "rb").read()).hexdigest()
-
+        if not file_hash:
+            file_hash = hashlib.sha1(open(fname, "rb").read()).hexdigest()
+        
         # open the file info
         if not os.path.exists( os.path.join(self.db_base_path, file_hash[:2], file_hash[2:4], file_hash) ):
             return {}
 
-        file_info_str = open( os.path.join(self.db_base_path, file_hash[:2], file_hash[2:4], file_hash) ).read()
-        file_info = {'ds':file_info_str.split()[0].strip(), 'path':file_info_str.split()[1].split(), 'hash':file_hash}
+        file_info_lines = open( os.path.join(self.db_base_path, file_hash[:2], file_hash[2:4], file_hash) ).readlines()
+        file_info = {'ds':[], 'path':file_info_lines[1].strip(), 'hash':file_hash}
+        for ds in file_info_lines[0].split():
+            file_info['ds'].append(ds.strip())
+            
         return file_info
         
     def find_ds_from_file(self, fname):
@@ -112,7 +129,10 @@ class DSDatabase:
         file_info = self.get_file_info(fname)
         if not file_info:
             return ''
-        return file_info['ds']
+
+        if len(file_info['ds']) > 1:
+            print("WARNING: File {0} present in multiple datasets ({1}). Assuming latest one ({2})".format(fname, file_info['ds'], file_info['ds'][0]))
+        return file_info['ds'][0]
 
     def check_ds_hash(self, ds_hash):
         """check that a ds hash is valid"""
@@ -192,3 +212,20 @@ class DSDatabase:
             return tree_info
         
         return get_parent_info(ds_hash)
+
+    def add_files(self, filelist, dataset):
+        """Add the given files to the given dataset"""
+
+        # first, does the dataset exist?
+        ds_info = self.get_ds_info(dataset)
+
+        if not ds_info:
+            raise NotValidFileOrHash
+
+        ds_info['file_paths'] += filelist
+        file_hash = {}
+        for i in range(0, len(ds_info['file_hashes'])):
+            file_hash[ ds_info['file_paths'][i] ] = ds_info['file_hashes'][i]
+
+        self.add_ds(ds_info['file_paths'], parents=ds_info['parents'], tags=ds_info['tags'], file_hash=file_hash, ds_hash=ds_info['ds_hash'])
+        
